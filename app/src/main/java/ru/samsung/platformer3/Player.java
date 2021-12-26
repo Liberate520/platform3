@@ -15,6 +15,8 @@ public class Player extends Actor{
     private int timeForCurrentFrame = 0;
     private int frameTime = 80;
     private boolean stay = false;
+    private int maxSpeed = 10;
+    private boolean stop = false;
 
     public Player(float x, float y, Bitmap bitmap, int countFrame) {
         super(x, y, bitmap);
@@ -47,13 +49,74 @@ public class Player extends Actor{
 
         velY = velY + Game.getGravity();
         y = y + velY;
+
+        for (Ground ground: Game.grounds){
+            if (onBound(ground)){
+                if (y < ground.y) {
+                    y = ground.y - height;
+                    setStay(true);
+                } else {
+                    y = ground.y + ground.height;
+                }
+                velY = 0;
+            }
+        }
+
+        if (stop){
+            if (velX > 1){
+                velX -= 1;
+            } else if (velX < -1){
+                velX += 1;
+            } else {
+                velX = 0;
+                stop = false;
+            }
+        }
         x = x + velX;
+
+        for (Ground ground: Game.grounds){
+            if (onBound(ground)){
+                if (x < ground.x) {
+                    x = ground.x - width;
+                } else {
+                    x = ground.x + ground.width;
+                }
+                velX = 0;
+            }
+        }
 
         if (y + height > Game.getScreenHeight()){
             y = Game.getScreenHeight() - height;
             velY = 0;
             stay = true;
         }
+    }
+
+    public void stop(){
+        stop = true;
+    }
+
+    public void setVelX(float velX) {
+        if (Math.abs(velX) > maxSpeed){
+            if (velX > 0) {
+                velX = maxSpeed;
+            } else {
+                velX = -maxSpeed;
+            }
+        } else {
+            this.velX = velX;
+        }
+    }
+
+    public void setVelY(float velY) {
+        if (Math.abs(velY) > maxSpeed){
+            if (velY > 0) {
+                velY = maxSpeed;
+            } else {
+                velY = -maxSpeed;
+            }
+        }
+        this.velY = velY;
     }
 
     public boolean isStay() {
@@ -63,4 +126,5 @@ public class Player extends Actor{
     public void setStay(boolean stay) {
         this.stay = stay;
     }
+
 }

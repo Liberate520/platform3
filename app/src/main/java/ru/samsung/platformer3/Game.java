@@ -25,7 +25,9 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     private final int timeInterval = 20;
     private Timer timer;
     private static int screenWidth, screenHeight;
-    private List<Ground> grounds = new ArrayList<>();
+    static List<Ground> grounds = new ArrayList<>();
+    private Joystick joystick;
+    private int indexPointerJoystick;
 
     private static final int gravity = 1;
 
@@ -39,7 +41,10 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
         bitmapGround5 = Bitmap.createScaledBitmap(bitmapGround5, 100, 100, true);
 
         grounds.add(new Ground(0, 300, bitmapGround5));
+        grounds.add(new Ground(100, 500, bitmapGround5));
         player = new Player(10, 10, bitmapPlayer, 6);
+
+        joystick = new Joystick(0, 0, 80, 40);
     }
 
     @Override
@@ -52,6 +57,7 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
         screenWidth = width;
         screenHeight = height;
+        joystick.setPosition(100, screenHeight - 100);
     }
 
     @Override
@@ -60,14 +66,9 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     private void update(){
+        joystick.update();
+        player.setVelX(player.getVelX() + (float) joystick.getActuatorX());
         player.update(timeInterval);
-        for (Ground ground: grounds){
-            if (player.onBound(ground)){
-                player.y = ground.y - player.height;
-                player.setStay(true);
-                player.velY = 0;
-            }
-        }
     }
 
     private void draw(){
@@ -77,15 +78,46 @@ public class Game extends SurfaceView implements SurfaceHolder.Callback {
             ground.onDraw(canvas);
         }
         player.onDraw(canvas);
+        joystick.draw(canvas);
         surfaceHolder.unlockCanvasAndPost(canvas);
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        switch (event.getAction()){
+        switch (event.getActionMasked()){
             case MotionEvent.ACTION_DOWN:
-                player.jump();
+                if (joystick.isPressed(event.getX(), event.getY())){
+                    joystick.setIsPressed(true);
+                    indexPointerJoystick = event.getActionIndex();
+                } else {
+                    player.jump();
+                }
                 break;
+            case MotionEvent.ACTION_POINTER_DOWN:
+                if (joystick.isPressed(event.getX(1), event.getY(1))){
+                    joystick.setIsPressed(true);
+                    indexPointerJoystick = event.getActionIndex();
+                } else {
+                    player.jump();
+                }
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (joystick.getIsPressed()){
+                    joystick.setActuator(event.getX(), event.getY());
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                if (joystick.getIsPressed()){
+                    joystick.setIsPressed(false);
+                    joystick.resetActuator();
+                    player.stop();
+                }
+            case MotionEvent.ACTION_POINTER_UP:
+                if (joystick.getIsPressed() && indexPointerJoystick == event.getActionIndex()){
+                    joystick.setIsPressed(false);
+                    joystick.resetActuator();
+                    player.stop();
+                }
         }
         return true;
     }

@@ -28,4 +28,20 @@ public abstract class Actor {
     }
     public abstract void onDraw(Canvas canvas);
     public abstract void update(int ms);
+
+    public float getVelX() {
+        return velX;
+    }
+
+    public void setVelX(float velX) {
+        this.velX = velX;
+    }
+
+    public float getVelY() {
+        return velY;
+    }
+
+    public void setVelY(float velY) {
+        this.velY = velY;
+    }
 }
